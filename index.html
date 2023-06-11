@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.2/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.11.2/datatables.min.css"/>
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <title>SOLD</title>
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div class="container" style="padding: 10px 50px;">
+        <h1>MC Sales for June 2023</h1>
+        <table id="employeeTable" >
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Branch Name</th>
+                    <th>Area</th>
+                    <th>Customer Name</th>
+                    <th>Brand</th>
+                    <th>Item Code</th>
+                    <th>Description</th>
+                    <th>Serial</th>
+                    <th>Sales Invoice Ref</th>
+                    <th>Invoice Date</th>
+                    <th>Cash Price</th>
+                    <th>Invoice Amount</th>
+                    <th>Sales Type</th>                  
+                </tr>
+            </thead>
+            <tbody id="data-output"></tbody>
+        </table>
+        <div>
+            <h3>MC Sales Bar Chart</h3>
+            <div id="chartContainer" style="padding: 0px 250px; width:1500px; height: 900px;">
+            
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.2/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.11.2/datatables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+
+    <script>
+        google.charts.load('current', { 'packages': ['corechart', 'bar'] });
+        google.charts.setOnLoadCallback(function() {
+            $(document).ready(function() {
+                var url = 'https://script.google.com/macros/s/AKfycbwOKMtxzO9OdwVeheZFis7wMBbPeQMrFGNJIFIbUOK9Mv9mmYTeFKo1eZfLcQo4gsxuDQ/exec';
+                $.getJSON(url, function(sales) {
+                    // Add Id column and auto-increment feature
+                    sales.forEach(function(row, index) {
+                        row.Id = index + 1;
+                    });
+
+                    var table = $('#employeeTable').DataTable({
+                        dom: 'Bfrtip', // Add export buttons to the DataTable
+                        buttons: [
+                            'excel',
+                            'copy',
+                            'csv',
+                            'pdf',
+                            'print'
+                        ],
+                        autoFill: true,
+                        responsive: true,
+                        data: sales,
+                        columns: [
+                            { data: 'Id' }, // New column for Id
+                            { data: 'Branch_Name' },
+                            { data: 'Area_Name' },
+                            { data: 'Customer_Name' },
+                            { data: 'Brand' },
+                            { data: 'Item_Code'},
+                            { data: 'Description' },
+                            { data: 'Serial' },
+                            { data: 'Sales_Invoice_Ref' },
+                            { data: 'Invoice_Date' },
+                            { data: 'Cash_Price'},
+                            { data: 'Invoice_Amount' },
+                            { data: 'Sales_Type'}
+                        ],
+                        scrollY: 400,
+                        deferRender: true,
+                        scroller: true,
+                        pagingType: 'full_numbers', // Add pagination style
+                        lengthMenu: [[10, 50, 100, -1], [10, 50, 100, 'All']], // Customize number of rows per page with "All" option
+                        pageLength: 10, // Set initial number of rows per page
+                        initComplete: function() {
+                            var chartData = google.visualization.arrayToDataTable(getBranchData());
+                            var options = {
+                                // chartArea: { width: '70%', height: '100%' },
+                                hAxis: { title: 'Count' },
+                                vAxis: { title: 'Branch Name' },
+                            };
+                            var chart = new google.visualization.BarChart(document.getElementById('chartContainer'));
+                            chart.draw(chartData, options);
+                        }
+                    });
+
+                    // Filter data to show only rows with Area_Name
+                    table.column(2).search('NCR-RIZAL').draw();
+
+                    // Function to get data for the Google Chart
+                    function getBranchData() {
+                        var branchCounts = {};
+                        sales.forEach(function(row) {
+                            var branch = row.Branch_Name;
+                            branchCounts[branch] = (branchCounts[branch] || 0) + 1;
+                        });
+
+                        var chartData = [['Branch_Name', 'Count']];
+                        Object.keys(branchCounts).forEach(function(branch) {
+                            chartData.push([branch, branchCounts[branch]]);
+                        });
+
+                        return chartData;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
